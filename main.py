@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from ultralytics import YOLO
+import os
 
 def main():
     # Load YOLO model
@@ -9,8 +10,24 @@ def main():
     # Corrected video path using raw string
     video_path = r'C:\jvn_codes\sen\object_thing\videoplayback.mp4'
     
+    # Create output directory if it doesn't exist
+    output_dir = r'C:\jvn_codes\sen\object_thing\output'
+    os.makedirs(output_dir, exist_ok=True)
+    
     # Video capture
     cap = cv2.VideoCapture(video_path)
+    
+    # Get video properties
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    
+    # Define output video path
+    output_video_path = os.path.join(output_dir, 'tracked_video.mp4')
+    
+    # Video writer
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
     
     # Tracking parameters
     tracked_objects = {}
@@ -113,6 +130,9 @@ def main():
             cv2.putText(frame_draw, label, (x1, y1-10), 
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
         
+        # Write frame to output video
+        out.write(frame_draw)
+        
         # Display the frame
         cv2.imshow('Object Tracking', frame_draw)
         
@@ -122,7 +142,10 @@ def main():
     
     # Cleanup
     cap.release()
+    out.release()
     cv2.destroyAllWindows()
+    
+    print(f"Tracked video saved to: {output_video_path}")
 
 if __name__ == '__main__':
     main()
