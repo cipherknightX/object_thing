@@ -18,6 +18,76 @@ def get_class_name(model, class_id):
     """
     return model.names[class_id]
 
+def generate_general_report(json_file_path, output_dir):
+    """
+    Generate a general report summarizing all tracked objects in CSV format.
+
+    Args:
+        json_file_path (str): Path to the JSON file with tracking data.
+        output_dir (str): Directory to save the general report.
+    """
+    with open(json_file_path, 'r') as file:
+        data = json.load(file)
+
+    object_summary = {}
+    
+    for entry in data:
+        class_name = entry['class']
+        if class_name not in object_summary:
+            object_summary[class_name] = 0
+        object_summary[class_name] += 1
+
+    # Save summary as a CSV file
+    summary_file_path = os.path.join(output_dir, 'general_report.csv')
+    with open(summary_file_path, 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(['Object Class', 'Number of Appearances'])
+        for class_name, count in object_summary.items():
+            writer.writerow([class_name, count])
+
+    print(f"General report saved to: {summary_file_path}")
+
+def generate_specific_report(json_file_path, output_dir, target_class, fps):
+    """
+    Generate a specific report for a particular object class in CSV format.
+
+    Args:
+        json_file_path (str): Path to the JSON file with tracking data.
+        output_dir (str): Directory to save the specific report.
+        target_class (str): The class name to generate the report for.
+        fps (int): Frames per second of the video.
+    """
+    with open(json_file_path, 'r') as file:
+        data = json.load(file)
+
+    specific_data = []
+    positions = []
+
+    for entry in data:
+        if entry['class'] == target_class:
+            frame = entry['frame']
+            time_seconds = frame / fps
+
+            # Calculate position
+            bbox = entry['bbox']
+            center_x = (bbox['x1'] + bbox['x2']) / 2
+            center_y = (bbox['y1'] + bbox['y2']) / 2
+
+            # Determine position type
+            position_type = "center" if 0.25 * 640 < center_x < 0.75 * 640 and 0.25 * 480 < center_y < 0.75 * 480 else "corner"
+            positions.append(position_type)
+
+            specific_data.append([frame, time_seconds, position_type])
+
+    # Save specific report as a CSV file
+    report_file_path = os.path.join(output_dir, f"{target_class}_report.csv")
+    with open(report_file_path, 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(['Frame', 'Time (s)', 'Position'])
+        writer.writerows(specific_data)
+
+    print(f"Specific report for {target_class} saved to: {report_file_path}")
+
 def main():
     # Load YOLO model
     model = YOLO('yolov8n.pt')  # Use nano model for efficiency
@@ -201,8 +271,12 @@ def main():
         json.dump(tracking_data, json_file, indent=4)
 
     print(f"Tracked video saved to: {output_video_path}")
-    print(f"CSV tracking data saved to: {output_csv_path}")
-    print(f"JSON tracking data saved to: {output_json_path}")
+    print(f"Tracking data saved to: {output_csv_path}")
+    print(f"Tracking data saved to JSON: {output_json_path}")
 
-if __name__ == '__main__':
+    # Generate reports
+    generate_general_report(output_json_path, output_dir)
+    generate_specific_report(output_json_path, output_dir, 'cell phone', fps)
+
+if __name__ == "__main__":
     main()
