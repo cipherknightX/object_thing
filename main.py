@@ -4,6 +4,7 @@ from ultralytics import YOLO
 import os
 import csv
 import json
+import matplotlib.pyplot as plt
 
 def get_class_name(model, class_id):
     """
@@ -49,7 +50,7 @@ def generate_general_report(json_file_path, output_dir):
 
 def generate_specific_report(json_file_path, output_dir, target_class, fps):
     """
-    Generate a specific report for a particular object class in CSV format.
+    Generate a specific report for a particular object class in CSV format, including total time and a graph.
 
     Args:
         json_file_path (str): Path to the JSON file with tracking data.
@@ -62,11 +63,13 @@ def generate_specific_report(json_file_path, output_dir, target_class, fps):
 
     specific_data = []
     positions = []
+    total_time = 0
 
     for entry in data:
         if entry['class'] == target_class:
             frame = entry['frame']
             time_seconds = frame / fps
+            total_time += 1 / fps
 
             # Calculate position
             bbox = entry['bbox']
@@ -87,6 +90,30 @@ def generate_specific_report(json_file_path, output_dir, target_class, fps):
         writer.writerows(specific_data)
 
     print(f"Specific report for {target_class} saved to: {report_file_path}")
+
+    # Save total time in report
+    total_time_report_path = os.path.join(output_dir, f"{target_class}_summary.csv")
+    with open(total_time_report_path, 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(['Object Class', 'Total Time (s)'])
+        writer.writerow([target_class, round(total_time, 2)])
+
+    print(f"Total time for {target_class} saved to: {total_time_report_path}")
+
+    # Generate graph
+    time_series = [entry[1] for entry in specific_data]
+    plt.figure(figsize=(10, 6))
+    plt.hist(time_series, bins=20, color='blue', alpha=0.7, label='Object Occurrence')
+    plt.title(f"Time Distribution of {target_class}")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Frequency")
+    plt.legend()
+
+    graph_file_path = os.path.join(output_dir, f"{target_class}_graph.png")
+    plt.savefig(graph_file_path)
+    plt.close()
+
+    print(f"Graph for {target_class} saved to: {graph_file_path}")
 
 def main():
     # Load YOLO model
