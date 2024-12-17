@@ -306,7 +306,7 @@ def main():
     generate_general_report(output_json_path, output_dir)
     # generate_specific_report(output_json_path, output_dir, 'cell phone', fps)
     # Ask user for the target class to generate a specific report
-    target_class = input("Enter the object class to generate a specific report (e.g., 'cell phone'): ")
+    target_class = input("Enter the object class to generate a specific report  ")
     generate_specific_report(output_json_path, output_dir, target_class, fps)
 
 
