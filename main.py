@@ -86,8 +86,9 @@ def generate_specific_report(json_file_path, output_dir, target_class, fps):
     report_file_path = os.path.join(output_dir, f"{target_class}_report.csv")
     with open(report_file_path, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
-        writer.writerow(['Frame', 'Time (s)', 'Position'])
+        writer.writerow(['Frame', 'Time (s)', 'Position']) 
         writer.writerows(specific_data)
+        
 
     print(f"Specific report for {target_class} saved to: {report_file_path}")
 
@@ -303,7 +304,11 @@ def main():
 
     # Generate reports
     generate_general_report(output_json_path, output_dir)
-    generate_specific_report(output_json_path, output_dir, 'cell phone', fps)
+    # generate_specific_report(output_json_path, output_dir, 'cell phone', fps)
+    # Ask user for the target class to generate a specific report
+    target_class = input("Enter the object class to generate a specific report (e.g., 'cell phone'): ")
+    generate_specific_report(output_json_path, output_dir, target_class, fps)
+
 
 if __name__ == "__main__":
     main()
